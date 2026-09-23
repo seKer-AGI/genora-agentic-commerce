@@ -1,0 +1,22 @@
+[project]
+name = "genora"
+version = "0.1.0"
+description = "GenOra — agentic workflow orchestration layer (Nova, Astra, Apex) for the GenOra marketplace"
+requires-python = ">=3.11"
+dependencies = [
+  "pydantic>=2.7",
+  "httpx>=0.27",
+  "numpy>=1.26",
+  "langgraph>=0.2",
+]
+
+[project.optional-dependencies]
+fastembed = ["fastembed>=0.3"]
+timesfm = ["timesfm>=1.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["genora"]
