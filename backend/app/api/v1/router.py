@@ -2,7 +2,19 @@
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import admin, analytics, auth, catalog, commerce, media, promotions, recommendations, sellers
+from app.api.v1.endpoints import (
+    admin,
+    agents,
+    analytics,
+    auth,
+    catalog,
+    commerce,
+    forecasting,
+    media,
+    promotions,
+    recommendations,
+    sellers,
+)
 
 api_router = APIRouter()
 for r in (
@@ -22,6 +34,8 @@ for r in (
     admin.router,
     analytics.router,
     recommendations.router,
+    forecasting.router,
+    agents.router,
     media.router,
 ):
     api_router.include_router(r)

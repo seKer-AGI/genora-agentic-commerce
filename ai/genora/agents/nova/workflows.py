@@ -275,18 +275,20 @@ class ProductSearchWorkflow(Workflow):
             "min_price": float(budget.min) if budget.min else None, "max_price": float(budget.max) if budget.max else None,
             "brands": [brand] if brand else [], "limit": 8,
         }
+        # Capitalised words that are not known brands/categories are probably brands we don't carry (e.g. "Nike").
+        unknown = [w for w in re.findall(r"\b[A-Z][a-zA-Z]+\b", ctx.text)
+                   if not matcher.brand(w) and not matcher.category(w)
+                   and w.lower() not in {"find", "show", "search", "i", "me", "please", "can", "could", "do", "any"}]
         res = _search(ctx, **params)
         note = None
-        if not res.products and query:
-            # Possibly an unknown brand (e.g. a brand not sold here): search without capitalised unknown words.
-            unknown = [w for w in re.findall(r"\b[A-Z][a-zA-Z]+\b", ctx.text)
-                       if not matcher.brand(w) and w.lower() not in {"find", "show", "search", "i", "me"}]
-            stripped = " ".join(w for w in query.split() if w not in unknown)
-            if unknown and stripped and stripped != query:
+        missing = [w for w in unknown if not any(w.lower() in f"{p.name} {p.brand or ''}".lower() for p in res.products)]
+        if missing:
+            stripped = " ".join(w for w in (query or "").split() if w not in missing)
+            if not res.products and stripped:
                 res = _search(ctx, **{**params, "query": stripped})
-                if res.products:
-                    note = (f"I couldn't find any {', '.join(unknown)} products on GenOra. "
-                            f"Here are similar {stripped} from other brands:")
+            if res.products:
+                note = (f"I couldn't find any {', '.join(missing)} products on GenOra. "
+                        f"Here are the closest matches{' for ' + stripped if stripped else ''} from other brands:")
         if not res.products and params["category"]:
             res = _search(ctx, **{**params, "query": None})
         if not res.products:

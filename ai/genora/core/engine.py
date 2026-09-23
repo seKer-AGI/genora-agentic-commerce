@@ -23,7 +23,7 @@ from langgraph.graph import END, StateGraph
 
 from genora.core.blocks import NoticeBlock
 from genora.core.memory import PendingAction, SessionState
-from genora.core.safety import SafetyReport, grounding_violations, inspect_message, wrap_untrusted
+from genora.core.safety import SafetyReport, grounding_violations, inspect_message, money_mentions, wrap_untrusted
 from genora.core.tools import ToolContext, ToolExecutor, ToolResult
 from genora.core.workflow import Workflow, WorkflowContext, WorkflowResult, WorkflowStatus
 from genora.errors import ProviderUnavailableError
@@ -231,7 +231,8 @@ class GenOraEngine:
                 ]
                 resp = self.llm.complete(prompt, temperature=0.3, max_tokens=220)
                 candidate = (resp.content or "").strip()
-                violations = grounding_violations(candidate, s["tool_ctx"].seen_prices, s["text"])
+                allowed = set(s["tool_ctx"].seen_prices) | set(money_mentions(" ".join(result.facts)))
+                violations = grounding_violations(candidate, allowed, s["text"])
                 if candidate and not violations:
                     result.text, phrased_by = candidate, "llm"
                     s["intent"].prompt_tokens += resp.prompt_tokens

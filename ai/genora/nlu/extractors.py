@@ -115,25 +115,33 @@ def mentions_reference(text: str) -> bool:
     return bool(_PRONOUN_RX.search(text) or _ORDINAL_RX.search(text) or _HASH_RX.search(text))
 
 
-# Phrases that introduce a product name, e.g. "reviews for the Quiet 900", "compare X and Y".
-_LEADS = re.compile(
-    r"(?:about|for|on|of|with|compare|comparing|between|is|are|the|buy|get|add|price of|reviews? (?:of|for))\s+"
-    r"(?:the\s+|this\s+|that\s+|a\s+|an\s+|my\s+)?(.+)$",
-    re.I,
-)
-_TRAILING = re.compile(
-    r"\s*(?:\?|\.|!|,)?\s*(?:please|thanks|any good|worth it|on other (?:sites|marketplaces|stores)|elsewhere|"
-    r"to (?:my|the) cart|for \$?\d.*|at \$?\d.*)?\s*$", re.I)
+# Words that express intent or filler rather than naming a product.
+_NON_PRODUCT = frozenset("""
+a an the this that these those it its them they one ones my me i i'm im you your we our us please thanks thank
+what whats what's which who how much many does do did is are was were be been am can could would should will shall
+there here any some anything something about for on of with to from in at by as and or but also just really
+tell show find search look looking get got buy buying purchase add put pay take accept offer offering offers
+price prices priced cost costs costing cheaper cheapest expensive discount discounts deal deals coupon coupons
+promo promotion promotions sale sales saving savings negotiate negotiation haggle lower best good great worth reliable
+review reviews rating ratings people customers buyers users say saying says think thinking feedback complaints
+opinion opinions pros cons compare comparing comparison versus vs difference between better
+other others marketplace marketplaces site sites store stores website websites retailer retailers elsewhere online
+cart basket details detail specs specifications spec info information more features
+accessories accessory bundle bundles kit goes go well together pair need needs
+available availability stock item items product products thing things model similar like
+first second third fourth fifth last 1st 2nd 3rd 4th 5th top yes no ok okay want wanna should i'll
+""".split())
+_TOKEN_RX = re.compile(r"[A-Za-z0-9][A-Za-z0-9./'\-]*")
 _FILLER = re.compile(r"^(?:the|this|that|these|those|a|an|my|it|them)\b\s*", re.I)
 
 
 def product_phrase(text: str) -> str | None:
-    """Best-effort product name phrase from a sentence (used to resolve against the catalog)."""
-    m = _LEADS.search(text)
-    phrase = m.group(1) if m else text
-    phrase = _TRAILING.sub("", phrase).strip(" ?.!,'\"")
-    phrase = _FILLER.sub("", phrase).strip()
-    if len(phrase) < 3 or phrase.lower() in {"it", "one", "this one", "that one", "them", "product", "item"}:
+    """Product name words from a sentence ("reviews for the Quiet 900?" → "Quiet 900"). None if nothing specific."""
+    cleaned = re.sub(r"\$\s?\d[\d,]*(?:\.\d+)?k?", " ", text)  # prices are not part of product names
+    words = [w.strip(".'") for w in _TOKEN_RX.findall(cleaned)]
+    kept = [w for w in words if w and w.lower() not in _NON_PRODUCT]
+    phrase = " ".join(kept).strip()
+    if len(phrase) < 2 or not any(c.isalpha() for c in phrase):
         return None
     return phrase[:120]
 

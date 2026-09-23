@@ -43,7 +43,7 @@ NOVA_INTENTS: list[IntentSpec] = [
         (r"\b(compare|comparison|versus|vs\.?|difference between|which (one )?is better|better between|side by side)\b", 3.0)]),
     IntentSpec("negotiate", "Ask the seller for a lower price", [
         (r"\b(negotiate|haggle|best price|lower (the )?price|make an offer|would (they|the seller) (take|accept))\b", 3.0),
-        (r"\bcan i (get|have|buy) (it|this|that|them|the .+?) for \$?\d", 3.5),
+        (r"\b(can|could) i (get|have|buy) (it|this|that|them|the|one)\b.{0,60}?\bfor\s*\$?\d", 3.5),
         (r"\b(offer|pay) \$?\d+.*\b(for (it|this|that))\b", 2.5)]),
     IntentSpec("offers", "Discounts, deals, coupons and offers", [
         (r"\b(discounts?|deals?|coupons?|promo(tion)?s?|offers?|on sale|sales?\b|cheaper|any savings|price drop)\b", 2.2)]),
@@ -53,7 +53,8 @@ NOVA_INTENTS: list[IntentSpec] = [
     IntentSpec("reviews", "What customers say about a product", [
         (r"\b(reviews?|what (are|do) (people|customers|buyers) (say|saying|think)|feedback|complaints?|is it (good|reliable|worth)|ratings?|pros and cons)\b", 2.6)]),
     IntentSpec("external_prices", "Prices on other marketplaces", [
-        (r"\b(other (marketplaces?|sites?|stores?|websites?|retailers?)|elsewhere|price comparison|compare prices|amazon|ebay|walmart|best buy|market price)\b", 3.0)]),
+        (r"\b(other (marketplaces?|sites?|stores?|websites?|retailers?)|elsewhere|price comparison|compare prices|amazon|ebay|walmart|best buy|market price)\b", 3.0),
+        (r"\b(compare prices|price comparison|prices? (on|at|from|in) other)\b", 1.5)]),
     IntentSpec("add_to_cart", "Add a product to the cart", [(r"\b(add|put)\b.*\b(cart|basket)\b", 3.5), (r"\b(buy it|i'?ll take it|purchase (it|this))\b", 2.5)]),
     IntentSpec("product_details", "Details / specs of a product", [(r"\b(tell me (more )?about|details|specs|specifications|more info|features of|what is the)\b", 1.8)]),
     IntentSpec("product_search", "Find specific products", [
@@ -127,8 +128,10 @@ class RuleBasedIntentClassifier(IntentClassifier):
             slot = state.clarification.slot
             if slot == "budget" and (not extract_budget(text, allow_bare_number=True).empty or NO_BUDGET.search(text)):
                 return IntentResult(state.clarification.intent, 0.95, "memory", {"answered": "budget"})
-            if slot == "offer_price" and extract_offer_price(text) is not None and len(text.split()) <= 8:
-                return IntentResult(state.clarification.intent, 0.95, "memory", {"answered": "offer_price"})
+            if slot in ("offer_price", "price") and extract_offer_price(text) is not None and len(text.split()) <= 8:
+                return IntentResult(state.clarification.intent, 0.95, "memory", {"answered": slot})
+            if slot in ("quantity", "percent") and re.search(r"\d", text) and len(text.split()) <= 6:
+                return IntentResult(state.clarification.intent, 0.9, "memory", {"answered": slot})
             if slot in ("product", "category", "choice") and len(text.split()) <= 8 and not self.scores(text):
                 return IntentResult(state.clarification.intent, 0.8, "memory", {"answered": slot})
         if has_image:

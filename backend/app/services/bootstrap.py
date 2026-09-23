@@ -14,7 +14,7 @@ DEFAULT_SETTINGS: dict[str, tuple[Any, str]] = {
     "agents.nova.enabled": (True, "Enable GenOra Nova (buyer agent)"),
     "agents.astra.enabled": (True, "Enable GenOra Astra (seller agent)"),
     "agents.apex.enabled": (False, "GenOra Apex is planned / not implemented; cannot be enabled"),
-    "agents.max_tool_calls_per_turn": (8, "Upper bound on tool calls in a single agent turn"),
+    "agents.max_tool_calls_per_turn": (12, "Upper bound on tool calls in a single agent turn"),
     "agents.use_llm_when_available": (True, "Use the configured LLM for intent detection and phrasing"),
     "agents.negotiation.enabled": (True, "Allow Nova to submit negotiation proposals to sellers"),
     "search.hybrid_enabled": (True, "Fuse keyword and vector search results"),
