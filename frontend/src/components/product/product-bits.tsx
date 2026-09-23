@@ -76,3 +76,13 @@ export function StockBadge({ stock }: { stock: number }) {
   if (stock <= 5) return <Badge variant="outline" className="border-amber-500/50 text-amber-700 dark:text-amber-300">Only {stock} left</Badge>;
   return <Badge variant="outline" className="border-emerald-500/40 text-emerald-700 dark:text-emerald-300">In stock</Badge>;
 }
+
+export function ProductStatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    active: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+    draft: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+    archived: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+    blocked: "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
+  };
+  return <Badge variant="secondary" className={cn("capitalize", styles[status])}>{status}</Badge>;
+}
